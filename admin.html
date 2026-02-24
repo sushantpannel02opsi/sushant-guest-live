@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Control Panel</title>
+  <style>
+    :root{ --bg:#0b0d10; --card:#12151b; --line:#232833; --text:#e9edf5; --accent:#bfc7d6; --radius:12px; }
+    body{ margin:0; background:var(--bg); font-family:sans-serif; color:var(--text); }
+    
+    /* Login Overlay */
+    #lock-screen{ position:fixed; inset:0; background:var(--bg); z-index:10000; display:grid; place-items:center; }
+    .login-box{ background:var(--card); padding:40px; border-radius:18px; border:1px solid var(--line); text-align:center; }
+    
+    /* Admin Panel Layout */
+    #admin-dashboard{ display:none; padding:20px; max-width:1000px; margin:auto; }
+    .control-card{ background:var(--card); border:1px solid var(--line); padding:20px; border-radius:var(--radius); margin-bottom:20px; }
+    input, select{ background:#161a21; border:1px solid var(--line); color:#fff; padding:10px; border-radius:8px; margin:5px; }
+    button{ background:var(--accent); color:#000; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; }
+    table{ width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td{ border-bottom:1px solid var(--line); padding:12px; text-align:left; }
+    .delete-btn{ background:#ff4d4d; color:white; padding:5px 10px; }
+  </style>
+</head>
+<body>
+
+  <div id="lock-screen">
+    <div class="login-box">
+      <h2>Admin Authentication</h2>
+      <input type="password" id="adminPass" placeholder="Enter Passkey">
+      <button onclick="checkPass()">Unlock Panel</button>
+      <p id="err" style="color:#ff4d4d; margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <div id="admin-dashboard">
+    <h1>Admin Control Panel</h1>
+    
+    <div class="control-card">
+      <h3>Create / Edit User Access</h3>
+      <input type="text" id="u" placeholder="Username">
+      <input type="text" id="p" placeholder="Passkey">
+      <input type="number" id="tv" placeholder="Duration Value">
+      <select id="tu">
+        <option value="min">Minutes</option>
+        <option value="hour">Hours</option>
+        <option value="day">Days</option>
+        <option value="week">Weeks</option>
+        <option value="month">Months</option>
+        <option value="lifetime">Lifetime</option>
+      </select>
+      <input type="number" id="dl" placeholder="Device Limit (e.g. 1)">
+      <br><br>
+      <label><input type="checkbox" id="m1"> Mode 1</label>
+      <label><input type="checkbox" id="m2" checked> Mode 2</label>
+      <button onclick="saveUser()">Add User</button>
+      <p id="umsg"></p>
+    </div>
+
+    <div class="control-card">
+      <h3>Active Users</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Passkey</th>
+            <th>Expires</th>
+            <th>Devices</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+const BIN_ID = "699dfa76ae596e708f4638a8";
+const MASTER_KEY = "$2a$10$ExsNNq.GQ3woS4NzbJCss.CNgK877Ng/pbF7UZ/L2vR/i9jkrdZ.2";
+
+// 1. SECURE PASSKEY CHECK (0015)
+function checkPass() {
+  const input = document.getElementById("adminPass").value;
+  // "MDAxNQ==" is Base64 for 0015
+  if (btoa(input) === "MDAxNQ==") {
+    document.getElementById("lock-screen").style.display = "none";
+    document.getElementById("admin-dashboard").style.display = "block";
+    loadUsers();
+  } else {
+    document.getElementById("err").textContent = "Invalid Admin Key";
+  }
+}
+
+// 2. LOAD USERS FROM JSONBIN
+async function loadUsers() {
+  const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": MASTER_KEY }
+  });
+  const data = await r.json();
+  const users = data.record.users || [];
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+
+  users.forEach((u, index) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${u.username}</td>
+        <td>${u.passkey}</td>
+        <td>${u.expiryDate || 'Lifetime'}</td>
+        <td>${u.deviceLimit}</td>
+        <td><button class="delete-btn" onclick="deleteUser(${index})">Delete</button></td>
+      </tr>`;
+  });
+}
+
+// 3. SAVE USER WITH TIME LIMIT LOGIC
+async function saveUser() {
+  const username = document.getElementById("u").value;
+  const passkey = document.getElementById("p").value;
+  const val = parseInt(document.getElementById("tv").value);
+  const unit = document.getElementById("tu").value;
+  const limit = document.getElementById("dl").value;
+
+  let expiryDate = "Lifetime";
+  if (unit !== "lifetime") {
+    let now = new Date();
+    if (unit === "min") now.setMinutes(now.getMinutes() + val);
+    if (unit === "hour") now.setHours(now.getHours() + val);
+    if (unit === "day") now.setDate(now.getDate() + val);
+    if (unit === "week") now.setDate(now.getDate() + (val * 7));
+    if (unit === "month") now.setMonth(now.getMonth() + val);
+    expiryDate = now.toISOString();
+  }
+
+  // Fetch current, add new, then push
+  const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": MASTER_KEY }
+  });
+  const data = await r.json();
+  const users = data.record.users || [];
+  
+  users.push({
+    username, passkey, expiryDate, 
+    deviceLimit: limit, 
+    modesAllowed: [
+      document.getElementById("m1").checked ? "mode1" : "",
+      document.getElementById("m2").checked ? "mode2" : ""
+    ].filter(Boolean)
+  });
+
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+    method: 'PUT',
+    headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY },
+    body: JSON.stringify({ users })
+  });
+  
+  loadUsers();
+}
+
+async function deleteUser(index) {
+  const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": MASTER_KEY }
+  });
+  const data = await r.json();
+  data.record.users.splice(index, 1);
+
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+    method: 'PUT',
+    headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY },
+    body: JSON.stringify(data.record)
+  });
+  loadUsers();
+}
+</script>
+</body>
+</html>

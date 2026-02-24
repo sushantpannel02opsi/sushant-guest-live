@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TikTokkingDubai Access</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #161a21;
+      --text: #e8ecf2;
+      --muted: #8b93a6;
+      --accent: #5dd1ff;
+      --border: #232836;
+      --danger: #ff5c5c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "TikTok Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(93, 209, 255, 0.1), transparent 28%),
+                  radial-gradient(circle at 80% 0%, rgba(155, 123, 255, 0.12), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .hidden { display: none !important; }
+
+    .login-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+    .login-card {
+      width: min(460px, 100%);
+      background: rgba(22, 26, 33, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+      text-align: left;
+    }
+    .login-card h1 { margin: 0 0 8px; }
+    .login-card p { margin: 0 0 16px; color: var(--muted); }
+    .login-card label { display: block; font-weight: 700; margin: 12px 0 6px; }
+    .login-card input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b0f16;
+      color: var(--text);
+    }
+    .login-card button[type="submit"] {
+      width: 100%;
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(93,209,255,0.18), rgba(155,123,255,0.18));
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .login-error { color: var(--danger); margin-top: 10px; }
+    .login-attempts { margin-top: 8px; color: var(--muted); }
+    .login-footnote { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+    .app-card {
+      width: min(520px, 100%);
+      background: rgba(22, 26, 33, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+      text-align: center;
+    }
+    .app-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+    .display-name-row {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .display-name-input {
+      width: min(280px, 100%);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b0f16;
+      color: var(--text);
+    }
+    .pill-button {
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(93,209,255,0.18), rgba(155,123,255,0.18));
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .pill-button.secondary { background: transparent; }
+
+    /* Lion upgrade download progress */
+    .lion-dl-bar {
+      margin-top: 18px;
+      display: none;
+    }
+    .lion-dl-bar.active { display: block; }
+    .lion-dl-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .lion-dl-track {
+      width: 100%;
+      height: 6px;
+      background: #1c2029;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .lion-dl-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #5dd1ff, #9b7bff);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .lion-dl-done {
+      font-size: 12px;
+      color: #5dd1ff;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .admin-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 11, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 2000;
+    }
+    .admin-panel.active { display: flex; }
+    .admin-card {
+      width: min(960px, 100%);
+      background: #121620;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      max-height: 90vh;
+      overflow: auto;
+    }
+    .admin-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .admin-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; }
+    .admin-heading-actions { display: flex; gap: 10px; }
+    .admin-stats-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin: 18px 0; }
+    .admin-stat-card { background: #0b0f16; border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .stat-label { color: var(--muted); font-size: 12px; margin: 0; }
+    .stat-value { margin: 6px 0 0; font-size: 22px; font-weight: 700; }
+    .admin-section { margin-top: 18px; }
+    .admin-form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .admin-form-grid label { display: block; font-weight: 700; margin-bottom: 6px; }
+    .admin-form-grid input, .admin-form-grid select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0b0f16;
+      color: var(--text);
+    }
+    .users-list { display: grid; gap: 10px; }
+    .user-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: #0b0f16;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .user-meta { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .user-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .user-actions button {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .user-actions .delete-user { border-color: var(--danger); color: var(--danger); }
+    .empty-state-card { text-align: center; color: var(--muted); padding: 16px; }
+  </style>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Secure Access</h1>
+      <p>Enter your assigned credentials to unlock host/remote access.</p>
+      <form id="loginForm">
+        <label for="loginUsername">Username</label>
+        <input type="text" id="loginUsername" autocomplete="username" required />
+
+        <label for="loginPassword">Password</label>
+        <div style="position: relative; margin-bottom: 12px;">
+          <input type="password" id="loginPassword" autocomplete="current-password" required style="padding-right: 45px;" />
+          <button type="button" class="password-toggle" data-target="loginPassword" aria-label="Show password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; padding: 4px; cursor: pointer;">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </div>
+
+        <button type="submit" id="loginButton">Log in</button>
+      </form>
+      <p id="loginError" class="login-error hidden"></p>
+      <div id="loginAttempts" class="login-attempts hidden">Attempts used: <span id="attemptValue">0</span>/5</div>
+      <p class="login-footnote">1 account = up to 3 devices.</p>
+    </div>
+  </div>
+
+  <div id="appShell" class="app-shell hidden">
+    <div class="app-card">
+      <h2>Welcome <span id="sessionUsername" class="hidden"></span></h2>
+      <p id="timeLeftBadge" class="hidden"></p>
+      <div class="app-actions">
+        <button class="pill-button" id="openHost">Open Mode 1 (Host)</button>
+        <button class="pill-button secondary" id="openRemote">Open Mode 2 (Remote)</button>
+        <button class="pill-button secondary" id="logoutBtn" type="button">Logout</button>
+      </div>
+      <div class="display-name-row">
+        <input id="displayNameInput" class="display-name-input" type="text" value="Host" placeholder="Display name for cam capsule" />
+        <button class="pill-button secondary" id="saveDisplayName" type="button">Save Name</button>
+      </div>
+      <div id="lionDlBar" class="lion-dl-bar">
+        <div class="lion-dl-label" id="lionDlLabel">Downloading premium lion effect… <span id="lionDlPct">0</span>%</div>
+        <div class="lion-dl-track"><div class="lion-dl-fill" id="lionDlFill"></div></div>
+        <div class="lion-dl-done" id="lionDlDone">✓ Premium lion effect ready</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminPanel" class="admin-panel" aria-hidden="true">
+    <div class="admin-card">
+      <div class="admin-heading">
+        <div>
+          <p class="admin-label">Control Center</p>
+          <h2>Admin Panel</h2>
+        </div>
+        <div class="admin-heading-actions">
+          <button class="pill-button secondary" type="button" id="refreshCustomersBtn">Refresh</button>
+          <button class="pill-button secondary" type="button" id="closeAdminBtn">Close</button>
+        </div>
+      </div>
+
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <p class="stat-label">Total users</p>
+          <p class="stat-value" id="totalUsersStat">0</p>
+        </div>
+        <div class="admin-stat-card">
+          <p class="stat-label">Active now</p>
+          <p class="stat-value" id="activeUsersStat">0</p>
+        </div>
+        <div class="admin-stat-card">
+          <p class="stat-label">Waiting</p>
+          <p class="stat-value" id="waitingUsersStat">0</p>
+        </div>
+        <div class="admin-stat-card">
+          <p class="stat-label">Expiring soon</p>
+          <p class="stat-value" id="expiringUsersStat">0</p>
+        </div>
+      </div>
+
+      <section class="admin-section">
+        <div class="section-heading">
+          <div>
+            <p class="admin-label">New pass</p>
+            <h3>Create customer</h3>
+          </div>
+        </div>
+        <form id="createUserForm">
+          <div class="admin-form-grid">
+            <div>
+              <label for="newUsername">Username</label>
+              <input type="text" id="newUsername" placeholder="new username" required />
+            </div>
+            <div>
+              <label for="newPassword">Password</label>
+              <div style="position: relative;">
+                <input type="password" id="newPassword" placeholder="temporary password" minlength="6" required style="padding-right: 45px;" />
+                <button type="button" class="password-toggle" data-target="newPassword" aria-label="Show password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; padding: 4px; cursor: pointer; color: var(--muted);">
+                  <i class="fa-regular fa-eye" style="font-size: 16px;"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label for="userDuration">Duration</label>
+              <select id="userDuration">
+                <option value="30">30 minutes (test)</option>
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="1440">1 day</option>
+                <option value="10080">1 week</option>
+                <option value="43200">1 month (30 days)</option>
+                <option value="129600">3 months</option>
+                <option value="259200">6 months</option>
+                <option value="525600">1 year</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <button class="pill-button" type="submit">Save customer</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-section">
+        <div class="section-heading">
+          <div>
+            <p class="admin-label">Customers</p>
+            <h3>Live sessions</h3>
+          </div>
+          <div class="section-actions">
+            <button class="pill-button secondary" type="button" id="deleteExpiredBtn">Delete expired</button>
+          </div>
+        </div>
+        <div class="admin-toolbar" style="margin: 12px 0;">
+          <input type="text" id="adminSearchInput" placeholder="Search username" />
+        </div>
+        <div class="users-list-wrapper">
+          <div id="usersList" class="users-list"></div>
+          <div id="adminEmptyState" class="empty-state-card" style="display:none;" data-default-text="No customers yet. Create your first user above.">
+            <p>No customers yet. Create your first user above.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const hostBtn = document.getElementById('openHost');
+    const remoteBtn = document.getElementById('openRemote');
+    if (hostBtn) hostBtn.addEventListener('click', () => window.open('mode1.html?mode=host', '_blank'));
+    if (remoteBtn) remoteBtn.addEventListener('click', () => window.open('mode2.html?mode=remote', '_blank'));
+
+    /* ---- Lion upgrade: listen for download progress from mode1 ---- */
+    const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+    const lionDlCh = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('lion-upgrade-dl') : null;
+
+    function showLionDlProgress(pct) {
+      const bar   = document.getElementById('lionDlBar');
+      const label = document.getElementById('lionDlLabel');
+      const pctEl = document.getElementById('lionDlPct');
+      const fill  = document.getElementById('lionDlFill');
+      const done  = document.getElementById('lionDlDone');
+      if (!bar) return;
+      bar.classList.add('active');
+      if (pct >= 100) {
+        if (label) label.style.display = 'none';
+        if (done) done.style.display = 'block';
+        if (fill) fill.style.width = '100%';
+      } else {
+        if (label) label.style.display = '';
+        if (done) done.style.display = 'none';
+        if (pctEl) pctEl.textContent = pct;
+        if (fill) fill.style.width = pct + '%';
+      }
+    }
+
+    if (!isIPhone && lionDlCh) {
+      lionDlCh.onmessage = (e) => {
+        const msg = e.data;
+        if (msg && msg.type === 'lion-dl') {
+          if (msg.status === 'done') showLionDlProgress(100);
+          else if (msg.status === 'progress') showLionDlProgress(msg.pct || 0);
+          else if (msg.status === 'error') {
+            const bar = document.getElementById('lionDlBar');
+            if (bar) bar.classList.remove('active');
+          }
+        }
+      };
+      // Also check IndexedDB on load to show "ready" if already cached
+      (async () => {
+        try {
+          const req = indexedDB.open('lionUpgradeCache', 1);
+          req.onupgradeneeded = () => { req.result.createObjectStore('blobs'); };
+          req.onsuccess = () => {
+            const db = req.result;
+            const tx = db.transaction('blobs', 'readonly');
+            const r = tx.objectStore('blobs').get('lionupgrade_webm_v5');
+            r.onsuccess = () => { if (r.result) showLionDlProgress(100); };
+          };
+        } catch(e) {}
+      })();
+    }
+
+    document.querySelectorAll('.password-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        const icon = btn.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-eye', !isPassword);
+          icon.classList.toggle('fa-eye-slash', isPassword);
+        }
+      });
+    });
+  </script>
+  <script src="temp-auth.js"></script>
+</body>
+</html>

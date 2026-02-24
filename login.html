@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login - Access Portal</title>
+  <style>
+    :root {
+      --bg:#0b0d10; --card:#12151b; --line:#232833; --text:#e9edf5;
+      --muted:#97a3b6; --accent:#bfc7d6; --radius:18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      background: radial-gradient(1100px 700px at 20% 10%, rgba(191,199,214,.18), transparent 60%),
+                  linear-gradient(180deg, var(--bg), #07080a);
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      color: var(--text);
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--line); border-radius: var(--radius);
+      width: min(400px, 95vw); overflow: hidden;
+    }
+    .header { padding: 32px; text-align: center; border-bottom: 1px solid var(--line); }
+    .header h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+    .body { padding: 32px; display: grid; gap: 15px; }
+    
+    label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
+    input {
+      background: #161a21; border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px; color: #fff; outline: none; width: 100%;
+    }
+    .btn {
+      background: var(--accent); color: #000; border: none; border-radius: 10px;
+      padding: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;
+    }
+    
+    /* Mode Selection View (Hidden by default) */
+    #mode-selector { display: none; text-align: center; padding: 20px; gap: 15px; }
+    .mode-btn {
+      display: block; padding: 20px; margin: 10px 0; border: 1px solid var(--line);
+      border-radius: 12px; background: rgba(255,255,255,0.03); color: var(--text);
+      text-decoration: none; font-weight: 600; transition: 0.2s;
+    }
+    .mode-btn:hover { background: var(--accent); color: #000; }
+
+    .msg { font-size: 14px; text-align: center; min-height: 20px; color: var(--muted); }
+    .links { text-align: center; font-size: 14px; border-top: 1px solid var(--line); padding: 20px; }
+    .links a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header"><h1 id="title">User Login</h1></div>
+    
+    <div class="body" id="login-form">
+      <label>Username</label>
+      <input id="u" placeholder="Enter username" />
+      <label>Passkey</label>
+      <input id="p" type="password" placeholder="••••••••" />
+      <button class="btn" onclick="handleLogin()">Sign In</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="body" id="mode-selector">
+      <p style="color: var(--muted); margin-bottom: 10px;">Login successful. Choose a mode:</p>
+      <a href="mode1.html" class="mode-btn">🎥 Host-Live</a>
+      <a href="mode2.html" class="mode-btn">🎮 Remote-Control</a>
+    </div>
+
+    <div class="links">
+      <span>Need help? Contact Admin</span><br>
+      <a href="https://www.instagram.com/fimpong34" target="_blank">@fimpong34</a>
+    </div>
+  </div>
+
+<script>
+const BIN_ID = "699dfa76ae596e708f4638a8";
+const MASTER_KEY = "$2a$10$ExsNNq.GQ3woS4NzbJCss.CNgK877Ng/pbF7UZ/L2vR/i9jkrdZ.2";
+
+async function handleLogin() {
+  const userVal = document.getElementById("u").value.trim();
+  const passVal = document.getElementById("p").value.trim();
+  const msg = document.getElementById("msg");
+
+  if (!userVal || !passVal) { msg.textContent = "Fill all fields"; return; }
+  msg.textContent = "Authenticating...";
+
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { "X-Master-Key": MASTER_KEY }
+    });
+    const data = await r.json();
+    const users = data.record.users || [];
+    
+    const found = users.find(u => u.username === userVal && u.passkey === passVal);
+
+    if (found) {
+      // 1. Check Expiry
+      const now = new Date();
+      if (found.expiryDate !== "Lifetime" && new Date(found.expiryDate) < now) {
+        msg.style.color = "#ff4d4d";
+        msg.textContent = "Access Expired. Contact Admin.";
+        return;
+      }
+
+      // 2. Set Secure Session
+      localStorage.setItem("access_granted", "true");
+      
+      // 3. Show Mode Selector
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("title").textContent = "Select Mode";
+      document.getElementById("mode-selector").style.display = "block";
+      
+    } else {
+      msg.style.color = "#ff4d4d";
+      msg.textContent = "Invalid credentials";
+    }
+  } catch (err) {
+    msg.textContent = "Network Error.";
+  }
+}
+</script>
+
+</body>
+</html>

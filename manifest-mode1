@@ -1,0 +1,20 @@
+{
+  "name": "Mode 1 Host",
+  "short_name": "Mode 1",
+  "start_url": "mode1.html?mode=host",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "image/tiktokicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "image/tiktokicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
