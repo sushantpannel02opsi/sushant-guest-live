@@ -4,21 +4,27 @@ const path = require("path");
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
-// ✅ Serve all static files in your repo (index.html, mode1.html, mode2.html, /image, /vrm, etc.)
+// ✅ Serve your HTML, images, vrm, etc.
 app.use(express.static(__dirname));
 
-// ✅ Home page
+/* ================================
+   BASIC ROUTES
+================================ */
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Health check
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-// TikTok profile API (keep your code)
+/* ================================
+   TIKTOK PROFILE FETCH (UNCHANGED)
+================================ */
+
 app.get("/api/tiktok/profile/:username", async (req, res) => {
   const raw = req.params.username || "";
   const username = raw.trim().replace(/^@+/, "").toLowerCase();
@@ -50,7 +56,6 @@ app.get("/api/tiktok/profile/:username", async (req, res) => {
       status === 429 ||
       /verify|captcha|blocked|Access Denied|enable javascript/i.test(html);
 
-    // SIGI_STATE
     const sigi = html.match(
       /<script[^>]*id="SIGI_STATE"[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/
     );
@@ -70,12 +75,12 @@ app.get("/api/tiktok/profile/:username", async (req, res) => {
       }
     }
 
-    // UNIVERSAL_DATA
     const uni = html.match(
       /<script[^>]*id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/
     );
     if (uni) {
       const u = JSON.parse(uni[1]);
+
       const user =
         u?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.userInfo?.user ||
         u?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.user ||
@@ -98,8 +103,8 @@ app.get("/api/tiktok/profile/:username", async (req, res) => {
         status,
         blocked: looksBlocked,
         hint: looksBlocked
-          ? "TikTok likely blocked the request from your IP/server. Use Apify/RapidAPI for reliable results."
-          : "TikTok returned HTML without embedded user JSON (format changed or restricted).",
+          ? "TikTok likely blocked the request from your IP/server."
+          : "TikTok returned HTML without embedded user JSON.",
       },
     });
   } catch (e) {
@@ -107,6 +112,12 @@ app.get("/api/tiktok/profile/:username", async (req, res) => {
   }
 });
 
-// ✅ IMPORTANT for Render:
+/* ================================
+   START SERVER (RENDER SAFE)
+================================ */
+
 const PORT = process.env.PORT || 8787;
-app.listen(PORT, () => console.log("✅ Running on port", PORT));
+
+app.listen(PORT, () => {
+  console.log("✅ Server running on port", PORT);
+});
